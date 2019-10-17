@@ -319,6 +319,8 @@ impl ControlState {
 pub enum EndControl {
     /// Loop the requested number of iterations, None = loop infinitely
     Loop(Option<u32>),
+    /// Loop the requested number of iterations, None = loop infinitely. Pause on each new iteration
+    LoopWithPause(Option<u32>),
     /// When duration of sampler/animation is reached, go back to rest state
     Normal,
     /// When duration of sampler/animation is reached, do nothing: stay at the last sampled state

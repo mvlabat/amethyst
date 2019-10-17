@@ -223,9 +223,19 @@ where
                 // Check end conditions
                 match control.end {
                     // Do loop control
-                    EndControl::Loop(Some(i)) if i <= 1 => (Done, Some(EndControl::Normal)),
+                    EndControl::Loop(Some(i)) | EndControl::LoopWithPause(Some(i)) if i <= 1 => {
+                        (Done, Some(EndControl::Normal))
+                    }
                     EndControl::Loop(None) => {
                         (Running(next_duration(last_frame, current_dur).0), None)
+                    }
+                    EndControl::LoopWithPause(None) => {
+                        let (next_dur, loops_removed) = next_duration(last_frame, current_dur);
+                        if loops_removed > 0 {
+                            (Paused(next_dur), None)
+                        } else {
+                            (Running(next_dur), None)
+                        }
                     }
                     EndControl::Loop(Some(i)) => {
                         let (next_dur, loops_removed) = next_duration(last_frame, current_dur);
@@ -235,6 +245,23 @@ where
                         } else {
                             (
                                 Running(next_dur),
+                                Some(EndControl::Loop(Some(remaining_loops))),
+                            )
+                        }
+                    }
+                    EndControl::LoopWithPause(Some(i)) => {
+                        let (next_dur, loops_removed) = next_duration(last_frame, current_dur);
+                        let remaining_loops = i - loops_removed;
+                        if remaining_loops <= 1 {
+                            (Done, Some(EndControl::Normal))
+                        } else {
+                            let next_control_state = if loops_removed > 0 {
+                                Paused(next_dur)
+                            } else {
+                                Running(next_dur)
+                            };
+                            (
+                                next_control_state,
                                 Some(EndControl::Loop(Some(remaining_loops))),
                             )
                         }
